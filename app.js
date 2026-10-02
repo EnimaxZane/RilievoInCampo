@@ -1007,6 +1007,7 @@ async function newProject() {
   await DB.put('projects', p); await openProject(p.id); addSheetFlow();
 }
 async function openProject(id) {
+  if (window.RCSync && window.RCSync.busy()) { toast('Attendi la fine della sincronizzazione'); return; }
   const p = await DB.get('projects', id); if (!p) return;
   S.proj = p; S.room = ''; S.sheet = null; S.img = null; refreshNums();
   $('#home').hidden = true; $('#editor').hidden = false;
@@ -1019,7 +1020,8 @@ async function openProject(id) {
 async function closeProject() {
   await saveNow(); S.proj = null; S.sheet = null; S.img = null; S.sel = null; renderPanel();
   for (const u of urlCache.values()) URL.revokeObjectURL(u); urlCache.clear();
-  $('#editor').hidden = true; $('#home').hidden = false; renderHome();
+  $('#editor').hidden = true; $('#home').hidden = false; await renderHome();
+  if (window.RCSync) window.RCSync.auto();
 }
 $('#btnBack').onclick = () => history.back();
 window.addEventListener('popstate', () => {
@@ -1056,12 +1058,19 @@ async function projMenu(p) {
   else if (v === 'bak') backupProject(p);
   else if (v === 'dup') { const b = busy('Duplico…'); try { const data = await buildBackup(p); await importBackupData(data, ' (copia)'); } finally { b.close(); } renderHome(); }
   else if (v === 'del') {
-    if (!(await confirmDlg('Eliminare il rilievo?', '"' + p.name + '" con tutte le tavole e le foto verrà eliminato dal telefono. L\'operazione non si può annullare.', 'Elimina', true))) return;
-    for (const f of await DB.filesOf(p.id)) await DB.del('files', f.id);
-    await DB.del('projects', p.id); renderHome(); toast('Rilievo eliminato');
+    const cloud = window.RCSync && window.RCSync.enabled();
+    if (!(await confirmDlg('Eliminare il rilievo?', '"' + p.name + '" con tutte le tavole e le foto verrà eliminato ' + (cloud ? 'da questo telefono, da Google Drive e dagli altri dispositivi' : 'dal telefono') + '. L\'operazione non si può annullare.', 'Elimina', true))) return;
+    await deleteProjectLocal(p.id);
+    if (cloud) window.RCSync.deleted(p.id);
+    renderHome(); toast('Rilievo eliminato');
+    if (cloud) window.RCSync.auto();
   }
 }
 $('#btnNew').onclick = newProject;
+async function deleteProjectLocal(pid) {
+  for (const f of await DB.filesOf(pid)) await DB.del('files', f.id);
+  await DB.del('projects', pid);
+}
 const techInput = $('#setTech');
 techInput.value = settings.get('tech', 'Per. Ed. Ernesto Zanettin');
 techInput.oninput = () => settings.set('tech', techInput.value);
@@ -1448,8 +1457,9 @@ async function init() {
   try { if (navigator.storage && navigator.storage.persist) navigator.storage.persist(); } catch (e) { /* */ }
   if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) navigator.serviceWorker.register('sw.js').catch(() => {});
   updateSymToolIcon();
-  renderHome();
+  await renderHome();
+  if (window.RCSync) window.RCSync.init();
 }
-window.RC = { S, DB, buildPDF, makeExample, openProject, numbering };
+window.RC = { S, DB, buildPDF, makeExample, openProject, numbering, renderHome, deleteProjectLocal, toast, dialog, formDlg, confirmDlg, h, icon, uid, isEditing: () => !$('#editor').hidden };
 init();
 })();

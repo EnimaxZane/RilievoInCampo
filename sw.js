@@ -1,6 +1,6 @@
 /* Service worker: tiene l'app disponibile senza connessione */
-const VERSION = 'rilievo-v1';
-const ASSETS = ['./', 'index.html', 'app.js', 'symbols.js', 'manifest.webmanifest',
+const VERSION = 'rilievo-v2';
+const ASSETS = ['./', 'index.html', 'app.js', 'symbols.js', 'sync.js', 'manifest.webmanifest',
   'lib/pdf.min.js', 'lib/pdf.worker.min.js', 'lib/pdf-lib.min.js',
   'icons/icon-192.png', 'icons/icon-512.png', 'icons/maskable-512.png'];
 self.addEventListener('install', (e) => {
