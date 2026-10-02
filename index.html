@@ -1,0 +1,247 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>Rilievo in Campo</title>
+<meta name="theme-color" content="#16233a">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<style>
+/* Layout: a tutto schermo; barra superiore + area di disegno + barra strumenti in basso; pannelli come fogli che salgono dal basso */
+:root{
+  --chrome:#16233a;      /* blu tavola */
+  --chrome-2:#22314d;
+  --chrome-fg:#eef1f6;
+  --chrome-mute:#9aa6bb;
+  --accent:#f2b705;      /* giallo strumento topografico */
+  --accent-fg:#16233a;
+  --bg:#eceee9;
+  --surface:#ffffff;
+  --fg:#18202c;
+  --mute:#5d6676;
+  --line:#d3d7d0;
+  --danger:#c92a2a;
+  --ok:#2b8a3e;
+  --well:#d6d9d3;
+  --font: Roboto, "Segoe UI", system-ui, -apple-system, Arial, sans-serif;
+  --mono: "Roboto Mono", ui-monospace, Menlo, monospace;
+  --r:10px;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#12161d; --surface:#1b212b; --fg:#e8ebf0; --mute:#9aa3b2; --line:#2e3644; --well:#0d1117;
+  --chrome:#0d1626; --chrome-2:#18243a; color-scheme:dark;
+}}
+:root[data-theme="dark"]{ --bg:#12161d; --surface:#1b212b; --fg:#e8ebf0; --mute:#9aa3b2; --line:#2e3644; --well:#0d1117; --chrome:#0d1626; --chrome-2:#18243a; color-scheme:dark; }
+
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--fg);font:15px/1.4 var(--font);overflow:hidden;overscroll-behavior:none;touch-action:manipulation}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+[hidden]{display:none!important}
+svg.i{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:none}
+
+/* ---------- HOME ---------- */
+#home{position:fixed;inset:0;display:flex;flex-direction:column;overflow:auto}
+.home-head{background:var(--chrome);color:var(--chrome-fg);padding:calc(env(safe-area-inset-top,0px) + 22px) 18px 22px}
+.home-head .brand{display:flex;align-items:center;gap:12px}
+.home-head h1{font-size:22px;margin:0;font-weight:700;letter-spacing:.2px}
+.home-head p{margin:4px 0 0;color:var(--chrome-mute);font-size:13.5px}
+.mark{width:40px;height:40px;border-radius:9px;background:var(--accent);display:grid;place-items:center;flex:none}
+.home-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}
+.home-body{padding:16px 16px calc(env(safe-area-inset-bottom,0px) + 30px);display:flex;flex-direction:column;gap:12px;max-width:760px;width:100%;margin:0 auto}
+.sec-label{font-size:12px;text-transform:uppercase;letter-spacing:1.1px;color:var(--mute);font-weight:700;margin:6px 2px 0}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px;display:flex;gap:12px;align-items:flex-start}
+.card .main{flex:1;min-width:0}
+.card h3{margin:0 0 3px;font-size:16.5px}
+.card .meta{color:var(--mute);font-size:13px;display:flex;flex-wrap:wrap;gap:4px 12px}
+.card .stats{margin-top:8px;display:flex;gap:6px;flex-wrap:wrap}
+.pill{font-size:12px;padding:2px 8px;border-radius:99px;background:var(--well);color:var(--fg);font-variant-numeric:tabular-nums}
+.empty{border:1.5px dashed var(--line);border-radius:var(--r);padding:26px 18px;text-align:center;color:var(--mute)}
+.empty b{display:block;color:var(--fg);font-size:16px;margin-bottom:4px}
+
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:0 16px;border-radius:9px;border:1px solid var(--line);background:var(--surface);font-weight:600}
+.btn.primary{background:var(--accent);color:var(--accent-fg);border-color:transparent}
+.btn.dark{background:var(--chrome-2);color:var(--chrome-fg);border-color:transparent}
+.btn.danger{color:var(--danger)}
+.btn.sm{min-height:36px;padding:0 12px;font-size:14px}
+.btn:disabled{opacity:.45}
+.iconbtn{width:44px;height:44px;border-radius:10px;border:0;background:transparent;display:grid;place-items:center;color:inherit}
+.iconbtn:active{background:rgba(127,127,127,.18)}
+
+/* ---------- EDITOR ---------- */
+#editor{position:fixed;inset:0;display:flex;flex-direction:column}
+.topbar{background:var(--chrome);color:var(--chrome-fg);display:flex;align-items:center;gap:2px;padding:calc(env(safe-area-inset-top,0px) + 4px) 6px 4px;z-index:5}
+.topbar .ttl{flex:1;min-width:0;display:flex;flex-direction:column;align-items:flex-start;border:0;background:transparent;padding:2px 6px;text-align:left}
+.topbar .ttl b{font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.topbar .ttl span{font-size:12px;color:var(--chrome-mute);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.roomchip{display:flex;align-items:center;gap:6px;border:1px solid rgba(255,255,255,.22);background:var(--chrome-2);color:var(--chrome-fg);border-radius:99px;height:34px;padding:0 12px;font-size:13.5px;max-width:42vw}
+.roomchip span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.roomchip .dot{width:8px;height:8px;border-radius:50%;background:var(--accent);flex:none}
+
+#stage{position:relative;flex:1;background:var(--well);overflow:hidden;touch-action:none}
+#cv{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none}
+.zoomctl{position:absolute;right:10px;top:10px;display:flex;flex-direction:column;gap:6px;z-index:3}
+.zoomctl button{width:42px;height:42px;border-radius:10px;border:1px solid var(--line);background:var(--surface);display:grid;place-items:center;box-shadow:0 1px 3px rgba(0,0,0,.12)}
+.hint{position:absolute;left:50%;top:10px;transform:translateX(-50%);background:var(--chrome);color:var(--chrome-fg);font-size:13.5px;padding:7px 14px;border-radius:99px;z-index:3;max-width:calc(100% - 120px);text-align:center;box-shadow:0 2px 8px rgba(0,0,0,.25)}
+.ctxbar{position:absolute;left:8px;right:8px;bottom:8px;z-index:3;background:var(--surface);border:1px solid var(--line);border-radius:12px;box-shadow:0 4px 18px rgba(0,0,0,.18);padding:8px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.ctxbar .grow{flex:1;min-width:0}
+.chips{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;padding-bottom:2px}
+.chips::-webkit-scrollbar{display:none}
+.chip{flex:none;display:inline-flex;align-items:center;gap:6px;height:34px;padding:0 11px;border-radius:99px;border:1px solid var(--line);background:var(--surface);font-size:13.5px;white-space:nowrap}
+.chip.on{background:var(--chrome);color:var(--chrome-fg);border-color:var(--chrome)}
+.chip .sw{width:18px;height:4px;border-radius:2px}
+
+.toolbar{background:var(--chrome);color:var(--chrome-fg);display:flex;justify-content:space-around;padding:4px 4px calc(env(safe-area-inset-bottom,0px) + 4px);z-index:5}
+.tool{flex:1;max-width:96px;border:0;background:transparent;color:var(--chrome-mute);display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 2px;border-radius:10px;font-size:11.5px;font-weight:600;letter-spacing:.2px}
+.tool.on{color:var(--accent-fg);background:var(--accent)}
+.tool canvas{width:22px;height:22px}
+
+/* ---------- SHEETS (pannelli dal basso) ---------- */
+.sheet{position:fixed;left:0;right:0;bottom:0;z-index:20;background:var(--surface);color:var(--fg);border-radius:16px 16px 0 0;box-shadow:0 -6px 30px rgba(0,0,0,.25);max-height:82vh;display:flex;flex-direction:column;padding-bottom:env(safe-area-inset-bottom,0px)}
+.sheet .grab{width:42px;height:5px;border-radius:3px;background:var(--line);margin:8px auto 2px;flex:none}
+.sheet-head{display:flex;align-items:center;gap:8px;padding:4px 10px 8px 16px;flex:none}
+.sheet-head h2{font-size:17px;margin:0;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sheet-body{overflow:auto;padding:0 16px 16px;-webkit-overflow-scrolling:touch}
+.scrim{position:fixed;inset:0;background:rgba(10,14,22,.45);z-index:19}
+
+.tabs{display:flex;gap:6px;overflow-x:auto;padding:0 16px 10px;flex:none;scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tabs button{flex:none;height:36px;padding:0 14px;border-radius:99px;border:1px solid var(--line);background:var(--surface);font-weight:600;font-size:14px;display:flex;gap:7px;align-items:center}
+.tabs button .dot{width:9px;height:9px;border-radius:50%}
+.tabs button.on{background:var(--chrome);color:var(--chrome-fg);border-color:var(--chrome)}
+.symgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:8px}
+.symbtn{border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:8px 4px 7px;display:flex;flex-direction:column;align-items:center;gap:5px;font-size:12px;line-height:1.2;text-align:center;min-height:96px}
+.symbtn canvas{width:46px;height:46px;background:#fff;border-radius:6px}
+.symbtn.on{outline:3px solid var(--accent);outline-offset:-2px}
+.symsearch{margin:0 16px 10px;flex:none}
+
+/* pannello elemento */
+#objpanel{max-height:58vh}
+.objhead{display:flex;align-items:center;gap:10px;padding:2px 8px 8px 14px;flex:none}
+.objhead .ico{width:40px;height:40px;background:#fff;border-radius:8px;border:1px solid var(--line);flex:none}
+.objhead .nm{flex:1;min-width:0}
+.objhead .nm b{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.objhead .nm span{font-size:12.5px;color:var(--mute)}
+.numtag{font:700 13px var(--mono);background:var(--chrome);color:var(--chrome-fg);padding:3px 7px;border-radius:6px}
+.quick{display:flex;gap:6px;padding:0 14px 10px;overflow-x:auto;flex:none;scrollbar-width:none}
+.quick::-webkit-scrollbar{display:none}
+.quick .btn{flex:none}
+
+.field{display:flex;flex-direction:column;gap:5px;margin-bottom:12px;min-width:0}
+.field label{font-size:12.5px;font-weight:700;color:var(--mute);letter-spacing:.3px}
+.field input,.field select,.field textarea{width:100%;min-height:44px;border:1px solid var(--line);background:var(--bg);border-radius:9px;padding:9px 11px;font-size:16px}
+.field textarea{min-height:76px;resize:vertical}
+.row{display:flex;gap:10px}
+.row>.field{flex:1}
+.stepper{display:flex;align-items:center;gap:6px}
+.stepper output{min-width:62px;text-align:center;font:600 15px var(--mono);font-variant-numeric:tabular-nums}
+.photos{display:grid;grid-template-columns:repeat(auto-fill,minmax(84px,1fr));gap:8px}
+.photos .ph{aspect-ratio:1;border-radius:8px;background:var(--well) center/cover;border:1px solid var(--line);position:relative}
+.photos .ph b{position:absolute;left:4px;bottom:4px;background:rgba(0,0,0,.65);color:#fff;font-size:11px;padding:1px 5px;border-radius:4px}
+.addph{aspect-ratio:1;border:1.5px dashed var(--line);border-radius:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;font-size:12px;color:var(--mute);background:transparent}
+
+/* dialoghi */
+.dlg-wrap{position:fixed;inset:0;z-index:40;background:rgba(10,14,22,.5);display:flex;align-items:center;justify-content:center;padding:16px}
+.dlg{background:var(--surface);color:var(--fg);border-radius:14px;width:100%;max-width:460px;max-height:88vh;display:flex;flex-direction:column;box-shadow:0 10px 40px rgba(0,0,0,.35)}
+.dlg h2{font-size:18px;margin:0;padding:18px 18px 8px}
+.dlg .body{padding:4px 18px 8px;overflow:auto}
+.dlg .body p{margin:0 0 12px;color:var(--mute)}
+.dlg .acts{display:flex;gap:8px;justify-content:flex-end;padding:10px 14px 14px;flex-wrap:wrap}
+.list{display:flex;flex-direction:column}
+.list button{display:flex;align-items:center;gap:12px;border:0;border-bottom:1px solid var(--line);background:transparent;min-height:50px;padding:6px 4px;text-align:left}
+.list button:last-child{border-bottom:0}
+.list button .sub{font-size:12.5px;color:var(--mute)}
+.list button.on{font-weight:700}
+.list button.on::after{content:"";margin-left:auto;width:10px;height:10px;border-radius:50%;background:var(--accent)}
+.pages{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:10px}
+.pages label{display:flex;flex-direction:column;gap:4px;align-items:center;font-size:13px;border:1px solid var(--line);border-radius:8px;padding:6px}
+.pages canvas{width:100%;height:auto;background:#fff;border:1px solid var(--line)}
+.check{display:flex;align-items:center;gap:10px;min-height:42px}
+.check input{width:20px;height:20px;accent-color:var(--chrome)}
+
+.toast{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom,0px) + 86px);transform:translateX(-50%);background:var(--chrome);color:var(--chrome-fg);padding:10px 16px;border-radius:10px;z-index:60;font-size:14px;box-shadow:0 4px 18px rgba(0,0,0,.3);max-width:calc(100% - 32px)}
+.busy{position:fixed;inset:0;z-index:70;background:rgba(10,14,22,.55);display:flex;align-items:center;justify-content:center;color:#fff;flex-direction:column;gap:14px;font-weight:600}
+.spin{width:38px;height:38px;border-radius:50%;border:4px solid rgba(255,255,255,.25);border-top-color:var(--accent);animation:sp 0.9s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){.spin{animation-duration:3s}}
+.viewer{position:fixed;inset:0;z-index:50;background:#000;display:flex;flex-direction:column}
+.viewer img{flex:1;min-height:0;object-fit:contain;width:100%}
+.viewer .vbar{display:flex;justify-content:space-between;padding:calc(env(safe-area-inset-top,0px) + 6px) 8px 6px;color:#fff}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+
+@media (min-width:820px){
+  .sheet{left:auto;right:12px;bottom:12px;width:420px;border-radius:16px;max-height:calc(100% - 140px)}
+  #objpanel{max-height:calc(100% - 140px)}
+}
+</style>
+</head>
+<body>
+
+<!-- HOME -->
+<section id="home">
+  <header class="home-head">
+    <div class="brand">
+      <div class="mark"><svg viewBox="0 0 24 24" class="i" style="stroke:#16233a"><path d="M3 21V9l6-6h12v18z"/><path d="M9 3v6H3"/><circle cx="15" cy="14" r="3"/><path d="M15 11v-2"/></svg></div>
+      <div>
+        <h1>Rilievo in Campo</h1>
+        <p>Arredi, impianti idrotermosanitari ed elettrici sulla planimetria</p>
+      </div>
+    </div>
+    <div class="home-actions">
+      <button class="btn primary" id="btnNew"><svg class="i" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>Nuovo rilievo</button>
+      <button class="btn dark" id="btnImport"><svg class="i" viewBox="0 0 24 24"><path d="M12 3v12M7 10l5 5 5-5M4 21h16"/></svg>Importa backup</button>
+    </div>
+  </header>
+  <div class="home-body">
+    <div class="sec-label">Rilievi salvati sul telefono</div>
+    <div id="projList"></div>
+    <div class="sec-label" style="margin-top:14px">Impostazioni</div>
+    <div class="card"><div class="main">
+      <div class="field" style="margin:0"><label for="setTech">Tecnico rilevatore (compare nei PDF)</label><input id="setTech" autocomplete="name"></div>
+    </div></div>
+    <p style="color:var(--mute);font-size:12.5px;margin:4px 2px" id="storageInfo"></p>
+  </div>
+</section>
+
+<!-- EDITOR -->
+<section id="editor" hidden>
+  <div class="topbar">
+    <button class="iconbtn" id="btnBack" aria-label="Torna ai rilievi"><svg class="i" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg></button>
+    <button class="ttl" id="btnSheets"><b id="tProj">—</b><span id="tSheet">—</span></button>
+    <button class="roomchip" id="btnRoom"><i class="dot"></i><span id="tRoom">Stanza</span></button>
+    <button class="iconbtn" id="btnUndo" aria-label="Annulla"><svg class="i" viewBox="0 0 24 24"><path d="M9 14L4 9l5-5"/><path d="M4 9h10a6 6 0 010 12h-3"/></svg></button>
+    <button class="iconbtn" id="btnMenu" aria-label="Menu"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="5" r="1.3"/><circle cx="12" cy="12" r="1.3"/><circle cx="12" cy="19" r="1.3"/></svg></button>
+  </div>
+  <div id="stage">
+    <canvas id="cv"></canvas>
+    <div class="hint" id="hint" hidden></div>
+    <div class="zoomctl">
+      <button id="zIn" aria-label="Ingrandisci"><svg class="i" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button>
+      <button id="zOut" aria-label="Riduci"><svg class="i" viewBox="0 0 24 24"><path d="M5 12h14"/></svg></button>
+      <button id="zFit" aria-label="Adatta"><svg class="i" viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
+    </div>
+    <div class="ctxbar" id="ctxbar" hidden></div>
+  </div>
+  <nav class="toolbar">
+    <button class="tool" data-tool="pan"><svg class="i" viewBox="0 0 24 24"><path d="M8 13V5.5a1.5 1.5 0 013 0V12M11 11.5V4a1.5 1.5 0 013 0v8M14 11.5V5.5a1.5 1.5 0 013 0V13"/><path d="M17 9.5a1.5 1.5 0 013 0V15a6 6 0 01-6 6h-2a6 6 0 01-4.8-2.4L4.3 14.6a1.6 1.6 0 012.5-2L8 14"/></svg>Seleziona</button>
+    <button class="tool" data-tool="sym"><canvas id="symIco" width="44" height="44"></canvas>Simboli</button>
+    <button class="tool" data-tool="line"><svg class="i" viewBox="0 0 24 24"><path d="M3 18h6V8h8v6h4"/><circle cx="3" cy="18" r="1.5"/><circle cx="21" cy="14" r="1.5"/></svg>Tracciato</button>
+    <button class="tool" data-tool="dim"><svg class="i" viewBox="0 0 24 24"><path d="M3 12h18M3 8v8M21 8v8M6 14l-2-2M20 12l-2-2"/></svg>Quota</button>
+    <button class="tool" data-tool="text"><svg class="i" viewBox="0 0 24 24"><path d="M5 6V4h14v2M12 4v16M9 20h6"/></svg>Testo</button>
+  </nav>
+</section>
+
+<div id="layer"></div>
+<input type="file" id="fileAny" hidden>
+<input type="file" id="fileCam" accept="image/*" capture="environment" hidden>
+<input type="file" id="fileGal" accept="image/*" multiple hidden>
+
+<script src="lib/pdf.min.js"></script>
+<script src="lib/pdf-lib.min.js"></script>
+<script src="symbols.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

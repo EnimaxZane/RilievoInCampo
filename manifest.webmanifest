@@ -1,0 +1,17 @@
+{
+  "name": "Rilievo in Campo",
+  "short_name": "Rilievo",
+  "description": "Rilievo di arredi e impianti idrotermosanitari ed elettrici su planimetria PDF, con esportazione in PDF.",
+  "lang": "it",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#16233a",
+  "theme_color": "#16233a",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
